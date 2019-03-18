@@ -49,8 +49,8 @@ def categorical_crossentropy(ot, otp):
      output = [];
      for i in range(len(ot)):
           output.append(ot[i] * np.log(otp[i][0]))
-     #output = -np.mean(output)
      return output
+     
 def softmax(otp):
      return np.exp(otp)/sum(np.exp(otp))
 
