@@ -54,10 +54,10 @@ def categorical_crossentropy(ot, otp):
 def softmax(otp):
      return np.exp(otp)/sum(np.exp(otp))
 
-def fit(Input, Label, Batch, alpha):
+def fit(Input, Label, Epoch, alpha):
      global St, Ot, Et, U, W, V
      initialization = True
-     for bc in range(Batch):
+     for ep in range(Epoch):
           OverallError = 0
           for t in range(len(Input)):
                if t == 0 and initialization == True: # if initialization, St=0
@@ -108,7 +108,7 @@ def fit(Input, Label, Batch, alpha):
           U = U + alpha * dEdU
           V = V + alpha * dEdV
           W = W + alpha * dEdW
-          print('Epoch=', bc, 'Loss:', OverallError)
+          print('Epoch=', ep, 'Loss:', OverallError)
      print('O[-1]:\n', Ot[-1])
           
           
