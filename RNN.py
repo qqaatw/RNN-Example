@@ -21,12 +21,12 @@ W = np.array(W)
 V = np.array(V)
 '''
 
-B = [0.567001]  # Bais
+B = [0.567001]  # Bias
 
 
-U = np.random.random_sample((3, 4))
-W = np.random.random_sample((3, 3))
-V = np.random.random_sample((4, 3))
+U = np.random.random_sample((3, 4))  # Output Weights
+W = np.random.random_sample((3, 3))  # Hidden Weights
+V = np.random.random_sample((4, 3))  # Input Weights
 
 
 St = [np.zeros((3, 1)) for i in range(len(Input))]
@@ -54,53 +54,63 @@ def categorical_crossentropy(ot, otp):
 def softmax(otp):
      return np.exp(otp)/sum(np.exp(otp))
 
-def fit(Input, Label, Epoch, alpha):
+def fit(inputs, label, epoch, alpha):
+     """
+          Params:
+               inputs: RNN's x. 3 x 4 NdArray.
+               label: RNN's y. 1 x 4 NdArray. 
+               epoch: Epoch. int.
+               alpha: Learning rate. float or int.
+
+          Return:
+               None.
+
+     """
      global St, Ot, Et, U, W, V
      initialization = True
-     for ep in range(Epoch):
+     for ep in range(epoch):
           OverallError = 0
-          for t in range(len(Input)):
+          for t in range(len(inputs)):
                if t == 0 and initialization == True: # if initialization, St=0
                     initialization = False
                     hiddenValue = np.matmul(W, np.zeros((3, 1)))
                else:
                     hiddenValue = np.matmul(W, np.array(St[t-1]))
 
-               inValue = np.matmul(U, np.array(Input[t])[np.newaxis].T)
-               baisValue = B
+               inValue = np.matmul(U, np.array(inputs[t])[np.newaxis].T)
+               biasValue = B
 
-               StateValue = hiddenValue + inValue + baisValue
-               StateValue = np.tanh(StateValue)
-               St[t] = StateValue
+               stateValue = np.tanh(hiddenValue + inValue + biasValue)
+               St[t] = stateValue
 
-               outValue = softmax(np.matmul(V, StateValue))
+               outValue = softmax(np.matmul(V, stateValue))
                Ot[t] = outValue
 
-               Et[t] = categorical_crossentropy(Label, Ot[t])
+               Et[t] = categorical_crossentropy(label, Ot[t])
                OverallError += np.abs(sum(Et[t]))
           
           # BPTT
           # http://ir.hit.edu.cn/~jguo/docs/notes/bptt.pdf
-          dEdV = np.zeros((V.shape))
-          dEdW = np.zeros((W.shape))
-          dEdU = np.zeros((U.shape))
+          dEdV = np.zeros(V.shape)
+          dEdW = np.zeros(W.shape)
+          dEdU = np.zeros(U.shape)
 
-          for t in range(len(Input)-1, -1, -1):
+          for t in range(len(inputs)-1, -1, -1):
                # Calculate output layer's derivative.
                # Derivative of cross entropy loss with softmax has
                # a very simple and elegant expression f'(t)=ot-otp.
                # https://deepnotes.io/softmax-crossentropy
-               dEdV += np.outer(ErrorO(Label[np.newaxis].T, Ot[t]), St[t].T)
+               dEdV += np.outer(ErrorO(label[np.newaxis].T, Ot[t]), St[t].T)
                
                # Calculate hidden/input layer's derivative.
-               delta_s = dh(np.matmul(V.T, ErrorO(Label[np.newaxis].T, Ot[t])), t) # V.T(3X4) X Eo(4X1) * St'(3X1) = 3X1
+               delta_s = dh(np.matmul(V.T, ErrorO(label[np.newaxis].T, Ot[t])), t) # V.T(3X4) X Eo(4X1) * St'(3X1) = 3X1
                
-               # Because of W/U relate to previous time-step,
+               # Because W/U relate to previous time-step,
                # we use a iteration to calculate it. 
                for bptt_t in range(t, -1, -1):
                     #if bptt_t-1 >= 0:
                     dEdW += np.outer(delta_s, St[bptt_t-1].T) # delta_s(3X1) X St[bptt_t-1].T(1X3) = 3X3 Matrix
-                    dEdU += np.outer(delta_s, Input[bptt_t])
+                    dEdU += np.outer(delta_s, inputs[bptt_t])
                     # Update derivative.
                     delta_s = dh(np.matmul(W.T, delta_s), bptt_t-1)
           
@@ -108,7 +118,7 @@ def fit(Input, Label, Epoch, alpha):
           U = U + alpha * dEdU
           V = V + alpha * dEdV
           W = W + alpha * dEdW
-          print('Epoch=', ep, 'Loss:', OverallError)
+          print('Epoch:', ep, 'Loss:', OverallError)
      print('O[-1]:\n', Ot[-1])
           
           
