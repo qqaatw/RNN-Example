@@ -71,7 +71,7 @@ def fit(inputs, label, epoch, alpha):
      for ep in range(epoch):
           OverallError = 0
           for t in range(len(inputs)):
-               if t == 0 and initialization == True: # if initialization, St=0
+               if t == 0 and initialization: # if initialization, St=0
                     initialization = False
                     hiddenValue = np.matmul(W, np.zeros((3, 1)))
                else:
